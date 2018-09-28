@@ -9,15 +9,6 @@ import (
 var serialID int
 var events []Event
 
-type Event struct {
-	ID              int    `json:"id"`
-	Name            string `json:"name"`
-	City            string `json:"city"`
-	Venue           string `json:"venue"`
-	PublicationDate string `json:"publicationDate"`
-	EventDate       string `json:"eventDate"`
-}
-
 func main() {
 	r := gin.Default()
 
