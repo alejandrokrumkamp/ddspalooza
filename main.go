@@ -1,14 +1,16 @@
 package main
 
 import (
+	"strconv"
+
 	"github.com/gin-gonic/gin"
 )
 
-var serialID uint32
+var serialID int
 var events []Event
 
 type Event struct {
-	ID              uint32 `json:"id"`
+	ID              int    `json:"id"`
 	Name            string `json:"name" binding:"required"`
 	City            string `json:"city" binding:"required"`
 	Venue           string `json:"venue" binding:"required"`
@@ -24,6 +26,18 @@ func main() {
 			"events": events})
 	})
 
+	r.GET("/events/:eventId", func(c *gin.Context) {
+		eventID, _ := strconv.Atoi(c.Param("eventId"))
+		for i := range events {
+			if events[i].ID == eventID {
+				c.JSON(200, events[i])
+				return
+			}
+		}
+
+		c.JSON(404, gin.H{"message": "Event not found"})
+	})
+
 	r.POST("/events", func(c *gin.Context) {
 		var event Event
 		event.ID = serialID
@@ -33,5 +47,38 @@ func main() {
 		c.JSON(200, event)
 	})
 
-	r.Run()
+	// TODO prevent already set fields to be overwritten with zero values
+	r.PATCH("/events/:eventId", func(c *gin.Context) {
+		var event Event
+		c.BindJSON(&event)
+
+		eventID, _ := strconv.Atoi(c.Param("eventId"))
+		for i := range events {
+			if events[i].ID == eventID {
+				event.ID = events[i].ID
+				events[i] = event
+				c.JSON(200, events[i])
+				return
+			}
+		}
+		c.JSON(404, gin.H{"message": "Event not found"})
+	})
+
+	r.DELETE("/events/:eventId", func(c *gin.Context) {
+		eventID, _ := strconv.Atoi(c.Param("eventId"))
+		for i := range events {
+			if events[i].ID == eventID {
+				events[i] = events[len(events)-1]
+				var event Event
+				events[len(events)-1] = event
+				events = events[:len(events)-1]
+				c.JSON(200, gin.H{"message": "OK"})
+				return
+			}
+		}
+
+		c.JSON(404, gin.H{"message": "Event not found"})
+	})
+
+	r.Run(":8080")
 }
